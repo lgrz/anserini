@@ -65,6 +65,7 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.LMDirichletSimilarity;
+import org.apache.lucene.search.similarities.LMJelinekMercerSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.FSDirectory;
 
@@ -395,6 +396,19 @@ public class SimpleSearcher implements Closeable {
    */
   public void set_qld(float mu) {
     this.similarity = new LMDirichletSimilarity(mu);
+
+    // We need to re-initialize the searcher
+    searcher = new IndexSearcher(reader);
+    searcher.setSimilarity(similarity);
+  }
+
+  /**
+   * Specifies use of query likelihood with Jelinek-Mercer smoothing as the scoring function.
+   *
+   * @param lambda lambda smoothing parameter
+   */
+  public void set_qljm(float lambda) {
+    this.similarity = new LMJelinekMercerSimilarity(lambda);
 
     // We need to re-initialize the searcher
     searcher = new IndexSearcher(reader);
