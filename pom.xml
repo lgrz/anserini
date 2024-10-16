@@ -174,6 +174,42 @@
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
               </transformers>
+              <!-- See https://maven.apache.org/plugins/maven-shade-plugin/examples/includes-excludes.html
+
+                Local dev build of fatjar results in java.lang.SecurityException for signature files in the
+                META-INF directory.
+
+                Wip notes...
+                $ mvn clean package
+                ...
+                [INFO] Including org.bouncycastle:bcprov-jdk15on:jar:1.70 in the shaded jar.
+                ...
+
+                $ unzip -l target/anserini-0.38.1-SNAPSHOT-fatjar.jar | grep BC[12]0..KE
+                   587903  2021-11-29 12:36   META-INF/BC1024KE.SF
+                     5676  2021-11-29 12:36   META-INF/BC1024KE.DSA
+                   587899  2021-11-29 12:36   META-INF/BC2048KE.SF
+                     6195  2021-11-29 12:36   META-INF/BC2048KE.DSA
+
+                $ java -cp target/anserini-0.38.1-SNAPSHOT-fatjar.jar io.anserini.search.SearchCollection
+                Error: A JNI error has occurred, please check your installation and try again
+                Exception in thread "main" java.lang.SecurityException: Invalid signature file digest for Manifest main
+                ...
+
+                Note that the fatjar from repo1.maven.org does not have this problem:
+                $ wget https://repo1.maven.org/maven2/io/anserini/anserini/0.38.1/anserini-0.38.1-fatjar.jar
+                $ unzip -l anserini-0.38.0-fatjar.jar | grep BC[12]0..KE
+              -->
+              <filters>
+                <filter>
+                  <artifact>org.bouncycastle:bcprov-jdk15on</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
               <!-- this will create both a normal thin jar and also a fatjar -->
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <shadedClassifierName>fatjar</shadedClassifierName>
